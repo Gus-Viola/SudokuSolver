@@ -9,63 +9,50 @@ internal class Program
 {
     private static void Main()
     {
-        // Andrew Stuart “Very Easy” example – replace with any 81‑char line
+        // ---- 1) Paste the puzzle you want to solve here -----------------
         const string givens =
-            "000260701680070090190004500820100040004602900050003028009300074040050036703018000";
+            "000004028406000005100030600000301000087000140000709000002010003900000507670400000";
 
-        // Build a solver preloaded with the givens
+        // ---- 2) Solve logically, recording every human‑style step --------
         var solver = SolverFactory.CreateFromGivens(givens);
+        var steps = new List<LogicalStepDesc>();
 
-        // Collect every logical step the solver applies
-        var logicalSteps = new List<LogicalStepDesc>();
-
-        // Run logical consolidation until no more changes
-        LogicResult logicResult;
+        LogicResult result;
         do
         {
-            logicResult = solver.ConsolidateBoard(logicalSteps);
-        } while (logicResult == LogicResult.Changed);
+            result = solver.ConsolidateBoard(steps);
+        } while (result == LogicResult.Changed);
 
-        // If logic alone didn’t finish, fall back to brute‑force + propagation
-        bool solved = logicResult == LogicResult.PuzzleComplete || solver.FindSolution();
-        Console.WriteLine($"Solved? {solved}");
+        // If logic alone didn’t finish, fall back to brute‑force
+        if (result != LogicResult.PuzzleComplete)
+            solver.FindSolution();
 
-        if (!solved)
-        {
-            Console.WriteLine("No solution found 🤔");
-            return;
-        }
-
-        // Timestamp for output files: YY-MO-DT-HR-MIN-SEC
-        string stamp = DateTime.Now.ToString("yy-MM-dd-HH-mm-ss");
-        string solvedPath = $"Solved_{stamp}.txt";
-        string stepsPath  = $"Steps_{stamp}.txt";
-
-        // ----------------------------
-        // 1) Write solved grid file
-        // ----------------------------
-        string solvedLine = solver.OutputString;
-        var gridBuilder = new StringBuilder();
+        // ---- 3) Build output text ---------------------------------------
+        var sb = new StringBuilder();
+        sb.AppendLine($"Original grid: {givens}");
+        sb.AppendLine();
+        sb.AppendLine("Solved grid (single‑line):");
+        sb.AppendLine(solver.OutputString);
+        sb.AppendLine();
+        sb.AppendLine("Solved grid (pretty):");
         for (int r = 0; r < solver.HEIGHT; r++)
         {
             for (int c = 0; c < solver.WIDTH; c++)
-                gridBuilder.Append(solver.GetValue((r, c))).Append(' ');
-            gridBuilder.AppendLine();
+                sb.Append(solver.GetValue((r, c))).Append(' ');
+            sb.AppendLine();
         }
+        sb.AppendLine();
+        sb.AppendLine($"Total logical steps: {steps.Count}\n");
 
-        File.WriteAllText(solvedPath,
-            $"{stamp}{Environment.NewLine}{solvedLine}{Environment.NewLine}{Environment.NewLine}{gridBuilder}");
+        int idx = 1;
+        foreach (var s in steps)
+            sb.AppendLine($"{idx++}) {s.ToString().Trim()}");
 
-        // ----------------------------
-        // 2) Write logical steps file
-        // ----------------------------
-        var stepLines = logicalSteps
-            .Select((step, idx) => $"{idx + 1}) {step.ToString().Trim()}");
-        File.WriteAllLines(stepsPath, stepLines);
+        // ---- 4) Write ONE timestamped file ------------------------------
+        string stamp = DateTime.Now.ToString("yyyyMMdd-HH-mm-ss");
+        string outFile = $"{stamp}-Solved.txt";
+        File.WriteAllText(outFile, sb.ToString());
 
-        // Console summary
-        Console.WriteLine($"Saved solved grid to {Path.GetFullPath(solvedPath)}");
-        Console.WriteLine($"Logged {logicalSteps.Count} logical steps to {Path.GetFullPath(stepsPath)}\n");
-        Console.WriteLine(gridBuilder);
+        Console.WriteLine($"\nWrote {Path.GetFullPath(outFile)}");
     }
 }
