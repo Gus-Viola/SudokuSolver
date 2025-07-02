@@ -11,7 +11,10 @@ internal class Program
     {
         // ---- 1) Paste the puzzle you want to solve here -----------------
         const string givens =
-            "358967421741352689629184375173546892492873516586219743264795138915438267837621954";
+            "000004028406000005100030600000301000087000140000709000002010003900000507670400000";
+        //Easiest 300967001040302080020000070070000090000873000500010003004705100905000207800621004 5 points
+        //Gentle 000004028406000005100030600000301000087000140000709000002010003900000507670400000 18 points
+        //Solved 358967421741352689629184375173546892492873516586219743264795138915438267837621954 0 points
 
         // ---- 2) Solve logically, recording every human‑style step --------
         var solver = SolverFactory.CreateFromGivens(givens);
@@ -32,12 +35,16 @@ internal class Program
         foreach (var s in steps)
         {
             string d = s.ToString();
-            if (d.StartsWith("Naked Single")) raw += 0.1;   // one elim.
-            else if (d.StartsWith("Hidden Single")) raw += 2.0;   // one elim.
-                                                                  // add more techniques later – see table below
+            if (d.StartsWith("Naked Single")) raw += 0.25;// one elim.
+            else if (d.StartsWith("Hidden Single")) raw += 16.0;// one elim.
+            // add more techniques later
         }
         // add one point per solved cell (you always reach 81)
-        raw += 81;
+        //raw += 81;                     // always added 81
+        // Stuart adds +81 once per solve **if the starting grid had blanks**
+        bool puzzleHadBlanks = givens.Contains('0');
+        if (puzzleHadBlanks) raw += 81;
+
 
         // Stuart’s public paper shows he divides by 17.5 (≈1000 / 57)
         // to squeeze the number into a 0-80-ish range, then rounds.
